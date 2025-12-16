@@ -17,7 +17,7 @@ It aims to allow users to use markdown-style formatting in Minecraft chat messag
 ## Planned Features
 - Emojis
   - In future, players will be able to use Unicode emojis in a similar way to how emojis are used in applications like Discord
-  - i.e. :smile: will be able to be used to display a smiling emoji
+  - i.e. \:smile\: will be able to be used to display a smiling emoji
 - Escaping
   - In future, players will be able to "escape" formatting using a backslash (\\).
 - Underlining
