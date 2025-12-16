@@ -81,4 +81,33 @@ public class ParserTests {
         tree.parse(input);
         assertEquals(expected, tree.toString());
     }
+
+    @Test
+    public void testEscaping() {
+        String input = "\\*escaped italics\\*";
+        String expected = "<RESET>*escaped italics*";
+        ParserTree tree = new ParserTree();
+        tree.parse(input);
+        assertEquals(expected, tree.toString());
+
+        input = "\\*semi-escaped italics*";
+        expected = "<RESET>*semi-escaped italics*";
+        tree = new ParserTree();
+        tree.parse(input);
+        assertEquals(expected, tree.toString());
+
+        input = "\\*\\*escaped bold\\*\\*";
+        expected = "<RESET>**escaped bold**";
+        tree = new ParserTree();
+        tree.parse(input);
+        assertEquals(expected, tree.toString());
+
+        input = "\\*\\*semi-escaped bold";
+        expected = "<RESET>**semi-escaped bold";
+        tree = new ParserTree();
+        tree.parse(input);
+        assertEquals(expected, tree.toString());
+    }
+
+    // TODO: Implement tests for links
 }

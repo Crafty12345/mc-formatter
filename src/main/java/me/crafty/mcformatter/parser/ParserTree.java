@@ -5,8 +5,7 @@ import net.minecraft.text.Text;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.*;
 
 public class ParserTree {
 
@@ -39,15 +38,14 @@ public class ParserTree {
         boolean italics = false;
 
         ParserNodeFactory factory = new ParserNodeFactory();
+        char previousChar = '\0';
 
         while (!charQ.isEmpty()) {
-            char previousChar = '\0';
-
             char char1 = charQ.poll();
-            if (char1 == '*') {
+            if ((char1 == '*') && (previousChar != '\\')) {
                 if (!charQ.isEmpty()) {
                     char char2 = charQ.poll();
-                    if (char2 == '*') {
+                    if ((char2 == '*') && (previousChar != '\\')) {
                         // If already bold, then this means that bold is closed
                         if (bold) {
                             if (italics) {
@@ -147,7 +145,7 @@ public class ParserTree {
                         }
                     }
                 }
-            } else if (char1 == '<') {
+            } else if ((char1 == '<') && (previousChar != '\\')) {
                 if (findChar(charQ, '>')) {
                     StringBuilder url = new StringBuilder();
                     char1 = charQ.poll();
@@ -175,7 +173,15 @@ public class ParserTree {
                     }
                 }
             } else {
-                builder.append(char1);
+                if (char1 == '\\') {
+                    if (!charQ.isEmpty()) {
+                        if (!isSpecialChar(charQ.peek())) {
+                            builder.append(char1);
+                        }
+                    }
+                } else {
+                    builder.append(char1);
+                }
             }
 
             // If last character, but there are still characters in builder
@@ -184,6 +190,7 @@ public class ParserTree {
                     nodes.add(factory.createNode(builder, bold, italics));
                 }
             }
+            previousChar = char1;
         }
     }
 
@@ -194,6 +201,16 @@ public class ParserTree {
         } catch (URISyntaxException ex) {
             return false;
         }
+    }
+
+    private boolean isSpecialChar(char pChar) {
+        Set<Character> specialChars = new HashSet<>(Arrays.asList(
+                '*',
+                '[', ']',
+                '(', ')',
+                '<', '>'
+        ));
+        return specialChars.contains(pChar);
     }
 
     private boolean boldClosed(Queue<Character> pChars) {
@@ -212,11 +229,13 @@ public class ParserTree {
 
     private boolean findChar(Queue<Character> pChars, char pTargetChar) {
         boolean result = false;
+        char previousChar = '\0';
         for (char currentChar : pChars) {
             if (!result) {
-                if (currentChar == pTargetChar) {
+                if ((currentChar == pTargetChar) && (previousChar != '\\')) {
                     result = true;
                 }
+                previousChar = currentChar;
             }
         }
         return result;
@@ -230,7 +249,7 @@ public class ParserTree {
         boolean endParenthesisFound = false;
         for (char currentChar : pChars) {
             if (!result) {
-                if ((currentChar == ']') && (!endSquareBracketFound)) {
+                if ((currentChar == ']') && (!endSquareBracketFound) && (previousChar != '\\')) {
                     endSquareBracketFound = true;
                 }
                 if (previousChar == ']') {
@@ -240,7 +259,7 @@ public class ParserTree {
                         return false;
                     }
                 }
-                if ((endSquareBracketFound) && (startParenthesisFound) && (currentChar == ')')) {
+                if ((endSquareBracketFound) && (startParenthesisFound) && (currentChar == ')') && (previousChar != '\\')) {
                     endParenthesisFound = true;
                     result = true;
                 }
