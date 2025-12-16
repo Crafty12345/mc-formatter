@@ -3,17 +3,17 @@ package me.crafty.mcformatter.parser;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 
-import java.util.Iterator;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.LinkedList;
 import java.util.Queue;
 
 public class ParserTree {
 
-
-    private LinkedList<ParserNode> nodes;
+    private final LinkedList<ParserNode> nodes;
 
     public ParserTree() {
-        nodes = new LinkedList<ParserNode>();
+        nodes = new LinkedList<>();
     }
 
     public MutableText toText() {
@@ -126,16 +126,25 @@ public class ParserTree {
                     }
 
                     if ((!linkText.isEmpty()) && (!linkURL.isEmpty())) {
-                        if (!builder.isEmpty()) {
-                            nodes.add(factory.createNode(builder, bold, italics));
-                            builder.setLength(0);
-                        }
+                        if (isURI(linkURL.toString())) {
+                            if (!builder.isEmpty()) {
+                                nodes.add(factory.createNode(builder, bold, italics));
+                                builder.setLength(0);
+                            }
 
-                        String text = linkText.toString();
-                        String url = linkURL.toString();
-                        ParserNode node = factory.createNode(text, bold, italics);
-                        node.setLinkTarget(url);
-                        nodes.add(node);
+                            String text = linkText.toString();
+                            String url = linkURL.toString();
+                            ParserNode node = factory.createNode(text, bold, italics);
+                            node.setLinkTarget(url);
+                            nodes.add(node);
+                        } else {
+                            // Don't interpret as URL if it's not URL
+                            builder.append('[');
+                            builder.append(linkText);
+                            builder.append("](");
+                            builder.append(linkURL);
+                            builder.append(')');
+                        }
                     }
                 }
             } else if (char1 == '<') {
@@ -147,21 +156,27 @@ public class ParserTree {
                         char1 = charQ.poll();
                     }
                     if (!url.isEmpty()) {
-                        if (!builder.isEmpty()) {
-                            nodes.add(factory.createNode(builder, bold, italics));
-                            builder.setLength(0);
-                        }
+                        if (isURI(url.toString())) {
+                            if (!builder.isEmpty()) {
+                                nodes.add(factory.createNode(builder, bold, italics));
+                                builder.setLength(0);
+                            }
 
-                        ParserNode node = factory.createNode(builder, bold, italics);
-                        node.setContent(url.toString());
-                        node.setLinkTarget(url.toString());
-                        nodes.add(node);
+                            ParserNode node = factory.createNode(builder, bold, italics);
+                            node.setContent(url.toString());
+                            node.setLinkTarget(url.toString());
+                            nodes.add(node);
+                        } else {
+                            // Don't interpret as URL if it's not URL
+                            builder.append('<');
+                            builder.append(url);
+                            builder.append('>');
+                        }
                     }
                 }
             } else {
                 builder.append(char1);
             }
-
 
             // If last character, but there are still characters in builder
             if(charQ.isEmpty()) {
@@ -169,6 +184,15 @@ public class ParserTree {
                     nodes.add(factory.createNode(builder, bold, italics));
                 }
             }
+        }
+    }
+
+    private boolean isURI(String pStr) {
+        try {
+            URI uri = new URI(pStr);
+            return true;
+        } catch (URISyntaxException ex) {
+            return false;
         }
     }
 
