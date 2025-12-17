@@ -28,6 +28,6 @@ public record FormattedSentMessage(SignedMessage message,
         String prefix = "<" + senderName + "> ";
         MutableText txt = Text.literal(prefix);
         txt.append(tree.toText());
-        pSender.networkHandler.sendChatMessage(signedMessage, MessageType.params(McFormatterMod.MESSAGE_TYPE_ID, pSender.server.getRegistryManager(), txt));
+        pSender.networkHandler.sendChatMessage(signedMessage, MessageType.params(McFormatterMod.MESSAGE_TYPE_ID, pSender.getServer().getRegistryManager(), txt));
     }
 }
